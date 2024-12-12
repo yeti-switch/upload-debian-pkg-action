@@ -1,0 +1,34 @@
+name: 'upload-debian-pkg'
+description: 'upload debian packages to the aptly and s3'
+inputs:
+  pkgs:
+    description: 'deb filenames to upload'
+    required: true
+  gpg_private_key:
+    required: true
+  passphrase:
+    required: true
+  aws_bucket:
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Install deps
+      shell: bash
+      run: apt -y --no-install-recommends install ruby gnupg curl
+    - name: Setup deb-s3
+      shell: bash
+      run: gem install deb-s3
+    - name: Import GPG key
+      uses: crazy-max/ghaction-import-gpg@v6
+      with:
+        gpg_private_key: ${{ inputs.GPG_PRIVATE_KEY }}
+        passphrase: ${{ inputs.GPG_PASSPHRASE }}
+
+    - name: upload packages to pkg.yeti-switch.org/debian/bookworm 1.13 main
+      shell: bash
+      run: ci/deploy.sh bookworm 1.13 main ${{inputs.pkgs}}
+
+    - name: upload packages to deb.yeti-switch.org/debian/1.13 bookworm main
+      shell: bash
+      run: deb-s3 upload --bucket=${{inputs.aws_bucket}} --prefix=1.13 --codename=bookworm --component=main --visibility=nil --force-path-style --sign=B104E10C35895CFAC0F91473C8D3BC80B6F22179 --gpg-options "\-\-pinentry-mode=loopback \-\-no-tty \-\-batch \-\-yes \-\-passphrase ${{ inputs.passphrase }}" ${{inputs.pkgs}}
