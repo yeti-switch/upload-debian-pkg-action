@@ -4,6 +4,7 @@ inputs:
   pkgs:
     description: 'deb filenames to upload'
     required: true
+
   gpg_private_key:
     description: 'GPG private key exported as an ASCII armored version or its base64 encoding'
     required: true
@@ -32,6 +33,16 @@ inputs:
     default: 'B104E10C35895CFAC0F91473C8D3BC80B6F22179'
     required: false
 
+  s3_access_key_id:
+    decription: "deb-s3 env AWS_ACCESS_KEY_ID"
+    required: true
+  s3_secret_access_key:
+    decription: "deb-s3 env AWS_SECRET_ACCESS_KEY"
+    required: true
+  s3_endpoint_url:
+    decription: "deb-s3 env AWS_ENDPOINT_URL"
+    required: true
+
 runs:
   using: 'composite'
   steps:
@@ -46,6 +57,10 @@ runs:
       shell: bash
       run: gpg --batch --import <(echo "${{ inputs.gpg_private_key }}")
 
-    - name: upload packages to s3
+    - name: Upload packages to S3
       shell: bash
+      env:
+        AWS_ACCESS_KEY_ID: ${{inputs.s3_access_key_id}}
+        AWS_SECRET_ACCESS_KEY: ${{inputs.s3_secret_access_key}}
+        AWS_ENDPOINT_URL: ${{inputs.s3_endpoint_url}}
       run: deb-s3 upload --bucket=${{inputs.s3_bucket}} --prefix=${{inputs.s3_prefix}} --codename=${{inputs.s3_codename}} --component=${{inputs.s3_component}} --visibility=nil --force-path-style --sign=${{inputs.s3_sign}} --gpg-options "\-\-pinentry-mode=loopback \-\-no-tty \-\-batch \-\-yes \-\-passphrase ${{ inputs.gpg_passphrase }}" ${{inputs.pkgs}}
