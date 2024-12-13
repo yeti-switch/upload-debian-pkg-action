@@ -10,11 +10,30 @@ inputs:
   gpg_passphrase:
     description: 'Passphrase of the GPG private key'
     required: true
-  aws_bucket:
-    required: true
+
+  s3_bucket:
+    desciption: 'deb-s3 --bucket'
+    default: 'debian'
+    required: false
+  s3_prefix:
+    desciption: 'deb-s3 --prefix'
+    default: '1.13'
+    required: false
+  s3_codename:
+    desciption: 'deb-s3 --codename'
+    default: 'bookworm'
+    required: false
+  s3_component:
+    desciption: 'deb-s3 --component'
+    default: 'main'
+    required: false
+  s3_sign:
+    description: 'deb-s3 --sign'
+    default: 'B104E10C35895CFAC0F91473C8D3BC80B6F22179'
+    required: false
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Install deps
       shell: bash
@@ -29,4 +48,4 @@ runs:
 
     - name: upload packages to s3
       shell: bash
-      run: deb-s3 upload --bucket=${{inputs.aws_bucket}} --prefix=1.13 --codename=bookworm --component=main --visibility=nil --force-path-style --sign=B104E10C35895CFAC0F91473C8D3BC80B6F22179 --gpg-options "\-\-pinentry-mode=loopback \-\-no-tty \-\-batch \-\-yes \-\-passphrase ${{ inputs.gpg_passphrase }}" ${{inputs.pkgs}}
+      run: deb-s3 upload --bucket=${{inputs.s3_bucket}} --prefix=${{inputs.s3_prefix}} --codename=${{inputs.s3_codename}} --component=${{inputs.s3_component}} --visibility=nil --force-path-style --sign=${{inputs.s3_sign}} --gpg-options "\-\-pinentry-mode=loopback \-\-no-tty \-\-batch \-\-yes \-\-passphrase ${{ inputs.gpg_passphrase }}" ${{inputs.pkgs}}
