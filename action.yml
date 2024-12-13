@@ -5,11 +5,14 @@ inputs:
     description: 'deb filenames to upload'
     required: true
   gpg_private_key:
+    description: 'GPG private key exported as an ASCII armored version or its base64 encoding'
     required: true
-  passphrase:
+  gpg_passphrase:
+    description: 'Passphrase of the GPG private key'
     required: true
   aws_bucket:
     required: true
+
 runs:
   using: "composite"
   steps:
@@ -23,8 +26,8 @@ runs:
     - name: Import GPG key
       uses: crazy-max/ghaction-import-gpg@v6
       with:
-        gpg_private_key: ${{ inputs.GPG_PRIVATE_KEY }}
-        passphrase: ${{ inputs.GPG_PASSPHRASE }}
+        gpg_private_key: ${{ inputs.gpg_private_key }}
+        passphrase: ${{ inputs.gpg_passphrase }}
 
     - name: upload packages to deb.yeti-switch.org/debian/1.13 bookworm main
       shell: bash
