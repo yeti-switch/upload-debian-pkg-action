@@ -24,11 +24,9 @@ runs:
       run: gem install deb-s3
 
     - name: Import GPG key
-      uses: crazy-max/ghaction-import-gpg@v6
-      with:
-        gpg_private_key: ${{ inputs.gpg_private_key }}
-        passphrase: ${{ inputs.gpg_passphrase }}
-
-    - name: upload packages to deb.yeti-switch.org/debian/1.13 bookworm main
       shell: bash
-      run: deb-s3 upload --bucket=${{inputs.aws_bucket}} --prefix=1.13 --codename=bookworm --component=main --visibility=nil --force-path-style --sign=B104E10C35895CFAC0F91473C8D3BC80B6F22179 --gpg-options "\-\-pinentry-mode=loopback \-\-no-tty \-\-batch \-\-yes \-\-passphrase ${{ inputs.passphrase }}" ${{inputs.pkgs}}
+      run: gpg --batch --import <(echo "${{ inputs.gpg_private_key }}")
+
+    - name: upload packages to s3
+      shell: bash
+      run: deb-s3 upload --bucket=${{inputs.aws_bucket}} --prefix=1.13 --codename=bookworm --component=main --visibility=nil --force-path-style --sign=B104E10C35895CFAC0F91473C8D3BC80B6F22179 --gpg-options "\-\-pinentry-mode=loopback \-\-no-tty \-\-batch \-\-yes \-\-passphrase ${{ inputs.gpg_passphrase }}" ${{inputs.pkgs}}
