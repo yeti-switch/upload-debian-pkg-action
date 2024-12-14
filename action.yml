@@ -2,8 +2,11 @@ name: 'upload-debian-pkg'
 description: 'upload debian packages to s3'
 inputs:
   pkgs:
-    description: 'deb filenames to upload'
+    description: 'deb pkgs filenames to upload'
     required: true
+  pkgs_to_remove:
+    description: 'pkgs names to remove before upload'
+    required: false
 
   gpg_private_key:
     description: 'GPG private key exported as an ASCII armored version or its base64 encoding'
@@ -44,6 +47,10 @@ inputs:
     required: true
 
 runs:
+  env:
+    AWS_ACCESS_KEY_ID: ${{inputs.s3_access_key_id}}
+    AWS_SECRET_ACCESS_KEY: ${{inputs.s3_secret_access_key}}
+    AWS_ENDPOINT_URL: ${{inputs.s3_endpoint_url}}
   using: 'composite'
   steps:
     - name: Install deps
@@ -57,10 +64,13 @@ runs:
       shell: bash
       run: gpg --batch --import <(echo "${{ inputs.gpg_private_key }}")
 
+    - name: Cleanup packages in S3
+      if: inputs.pkgs_to_remove
+      continue-on-error: true
+      run: |
+        deb-s3 delete --lock --arch=amd64 --bucket=${{inputs.s3_bucket}} --prefix=${{inputs.s3_prefix}} ----codename=${{inputs.s3_codename}} --component=${{inputs.s3_component}} --visibility=nil --force-path-style --sign=${{inputs.s3_sign}} --gpg-options="\-\-pinentry-mode=loopback \-\-no-tty \-\-batch \-\-yes \-\-passphrase ${{ inputs.gpg_passphrase }}" ${{inputs.pkgs_to_remove}}
+        deb-s3 clean --lock --bucket=${{inputs.s3_bucket}} --prefix=${{inputs.s3_prefix}} --codename=${{inputs.s3_codename}} --component=${{inputs.s3_component}} --visibility=nil --force-path-style --sign=${{inputs.s3_sign}} --gpg-options "\-\-pinentry-mode=loopback \-\-no-tty \-\-batch \-\-yes \-\-passphrase ${{ inputs.gpg_passphrase }}"
+
     - name: Upload packages to S3
       shell: bash
-      env:
-        AWS_ACCESS_KEY_ID: ${{inputs.s3_access_key_id}}
-        AWS_SECRET_ACCESS_KEY: ${{inputs.s3_secret_access_key}}
-        AWS_ENDPOINT_URL: ${{inputs.s3_endpoint_url}}
       run: deb-s3 upload --lock --bucket=${{inputs.s3_bucket}} --prefix=${{inputs.s3_prefix}} --codename=${{inputs.s3_codename}} --component=${{inputs.s3_component}} --visibility=nil --force-path-style --sign=${{inputs.s3_sign}} --gpg-options "\-\-pinentry-mode=loopback \-\-no-tty \-\-batch \-\-yes \-\-passphrase ${{ inputs.gpg_passphrase }}" ${{inputs.pkgs}}
