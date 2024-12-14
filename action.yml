@@ -63,4 +63,4 @@ runs:
         AWS_ACCESS_KEY_ID: ${{inputs.s3_access_key_id}}
         AWS_SECRET_ACCESS_KEY: ${{inputs.s3_secret_access_key}}
         AWS_ENDPOINT_URL: ${{inputs.s3_endpoint_url}}
-      run: deb-s3 upload --bucket=${{inputs.s3_bucket}} --prefix=${{inputs.s3_prefix}} --codename=${{inputs.s3_codename}} --component=${{inputs.s3_component}} --visibility=nil --force-path-style --sign=${{inputs.s3_sign}} --gpg-options "\-\-pinentry-mode=loopback \-\-no-tty \-\-batch \-\-yes \-\-passphrase ${{ inputs.gpg_passphrase }}" ${{inputs.pkgs}}
+      run: deb-s3 upload --lock --bucket=${{inputs.s3_bucket}} --prefix=${{inputs.s3_prefix}} --codename=${{inputs.s3_codename}} --component=${{inputs.s3_component}} --visibility=nil --force-path-style --sign=${{inputs.s3_sign}} --gpg-options "\-\-pinentry-mode=loopback \-\-no-tty \-\-batch \-\-yes \-\-passphrase ${{ inputs.gpg_passphrase }}" ${{inputs.pkgs}}
