@@ -7,6 +7,10 @@ inputs:
   pkgs_to_remove:
     description: 'pkgs names to remove before upload'
     required: false
+  pkgs_to_remove_arch:
+    description: 'pkgs arch to remove before upload'
+    default: 'amd64'
+    required: false
 
   gpg_private_key:
     description: 'GPG private key exported as an ASCII armored version or its base64 encoding'
@@ -65,7 +69,7 @@ runs:
       if: inputs.pkgs_to_remove
       continue-on-error: true
       run: |
-        deb-s3 delete --lock --arch=amd64 --bucket=${{inputs.s3_bucket}} --prefix=${{inputs.s3_prefix}} --codename=${{inputs.s3_codename}} --component=${{inputs.s3_component}} --visibility=nil --force-path-style --sign=${{inputs.s3_sign}} --gpg-options="\-\-pinentry-mode=loopback \-\-no-tty \-\-batch \-\-yes \-\-passphrase ${{ inputs.gpg_passphrase }}" ${{inputs.pkgs_to_remove}}
+        deb-s3 delete --lock --arch=${{inputs.pkgs_to_remove_arch}} --bucket=${{inputs.s3_bucket}} --prefix=${{inputs.s3_prefix}} --codename=${{inputs.s3_codename}} --component=${{inputs.s3_component}} --visibility=nil --force-path-style --sign=${{inputs.s3_sign}} --gpg-options="\-\-pinentry-mode=loopback \-\-no-tty \-\-batch \-\-yes \-\-passphrase ${{ inputs.gpg_passphrase }}" ${{inputs.pkgs_to_remove}}
         deb-s3 clean --lock --bucket=${{inputs.s3_bucket}} --prefix=${{inputs.s3_prefix}} --codename=${{inputs.s3_codename}} --component=${{inputs.s3_component}} --visibility=nil --force-path-style --sign=${{inputs.s3_sign}} --gpg-options "\-\-pinentry-mode=loopback \-\-no-tty \-\-batch \-\-yes \-\-passphrase ${{ inputs.gpg_passphrase }}"
       env:
         AWS_ACCESS_KEY_ID: ${{inputs.s3_access_key_id}}
